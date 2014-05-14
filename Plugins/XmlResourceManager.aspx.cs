@@ -428,9 +428,8 @@ namespace Nergard.EPi.Plugins.XmlResourceManager.Plugins
                     break;
             }
 
-            doc.Save(type == "views"
-                    ? Server.MapPath(string.Format(this.viewsxmlfilename, viewsfilenamepostfix + this.DdlSelectLanguage.SelectedItem.Value))
-                    : Server.MapPath(string.Format(this.xmlfilename, typeUpperCase, this.DdlSelectLanguage.SelectedItem.Value)));
+            var fileName = type == "views" ? string.Format(this.viewsxmlfilename, viewsfilenamepostfix + this.DdlSelectLanguage.SelectedItem.Value) : string.Format(this.xmlfilename, typeUpperCase, this.DdlSelectLanguage.SelectedItem.Value);         
+            doc.Save(UsingFileshare ? fileName : Server.MapPath(fileName));
         }
         
         private IEnumerable<BlockType> GetBlockTypes()
@@ -505,6 +504,8 @@ namespace Nergard.EPi.Plugins.XmlResourceManager.Plugins
             return ServiceLocator.Current.GetInstance<ITabDefinitionRepository>().List();
         }
 
+        private bool UsingFileshare { get { return viewsxmlfilename.StartsWith("\\"); } }
+
         private List<ViewResultItem> GetViewElements()
         {
             var result = new List<ViewResultItem>();
@@ -512,8 +513,15 @@ namespace Nergard.EPi.Plugins.XmlResourceManager.Plugins
             const string Expression = "languages/language";
             var doc = new XmlDocument();
 
-            var suffix = Server.MapPath(string.Format(this.viewsxmlfilename, viewsfilenamepostfix + this.DdlSelectLanguage.SelectedItem.Value));
-            var nosuffix = Server.MapPath(string.Format(this.viewsxmlfilename, ""));
+            var suffix = string.Format(this.viewsxmlfilename, viewsfilenamepostfix + this.DdlSelectLanguage.SelectedItem.Value);
+            var nosuffix = string.Format(this.viewsxmlfilename, "");
+            
+            if (!UsingFileshare)
+            {
+                suffix = Server.MapPath(suffix);
+                nosuffix = Server.MapPath(nosuffix);
+            }
+               
             try
             {
                 if (File.Exists(suffix))
